@@ -38,7 +38,7 @@ func (Fail2Ban) CaddyModule() caddy.ModuleInfo {
 func (m *Fail2Ban) Provision(ctx caddy.Context) error {
 	httpAppIface, err := ctx.App("http")
     if err != nil {
-        return m.logger.Error("getting http app: %v", err)
+        return fmt.Errorf("unknown config value: %s", v)
     }
 
     httpApp := httpAppIface.(*caddyhttp.App)
@@ -57,8 +57,8 @@ func (m *Fail2Ban) Match(req *http.Request) bool {
 		client_ip_p := caddyhttp.GetVar(req, caddyhttp.VarRemoteIP).(net.IP)
 		m.logger.Info("What we got", zap.String("getvar", client_ip_p))
 
-	    client_ip_p := caddyhttp.RemoteIP(req, m.trustedProxies)
-		m.logger.Info("What we got", zap.String("getvar", client_ip_p))
+	    client_ip_pp := caddyhttp.RemoteIP(req, m.trustedProxies)
+		m.logger.Info("What we got", zap.String("getvar", client_ip_pp))
 	
         remote_ip, _, err := net.SplitHostPort(req.RemoteAddr)
         if err != nil {
