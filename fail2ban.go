@@ -21,7 +21,6 @@ func init() {
 type Fail2Ban struct {
 	Banfile string `json:"banfile"`
 
-	trusted_proxies []*net.IPNet
 	logger  *zap.Logger
 	banlist Banlist
 }
@@ -36,16 +35,6 @@ func (Fail2Ban) CaddyModule() caddy.ModuleInfo {
 
 // Provision implements caddy.Provisioner.
 func (m *Fail2Ban) Provision(ctx caddy.Context) error {
-	httpAppIface, err := ctx.App("http")
-    if err != nil {
-        return fmt.Errorf("unknown config value: %s", v)
-    }
-
-    httpApp := httpAppIface.(*caddyhttp.App)
-
-    // Access trusted proxies
-    m.trustedProxies = httpApp.TrustedProxies
-	
 	m.logger = ctx.Logger()
 	m.banlist = NewBanlist(ctx, m.logger, &m.Banfile)
 	m.banlist.Start()
@@ -53,13 +42,6 @@ func (m *Fail2Ban) Provision(ctx caddy.Context) error {
 }
 
 func (m *Fail2Ban) Match(req *http.Request) bool {
-
-		client_ip_p := caddyhttp.GetVar(req, caddyhttp.VarRemoteIP).(net.IP)
-		m.logger.Info("What we got", zap.String("getvar", client_ip_p))
-
-	    client_ip_pp := caddyhttp.RemoteIP(req, m.trustedProxies)
-		m.logger.Info("What we got", zap.String("getvar", client_ip_pp))
-	
         remote_ip, _, err := net.SplitHostPort(req.RemoteAddr)
         if err != nil {
                 m.logger.Error("Error parsing remote addr into IP & port", zap.String("remote_addr", req.RemoteAddr), zap.Error(err))
