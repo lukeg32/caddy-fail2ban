@@ -1,4 +1,4 @@
-module github.com/Javex/caddy-fail2ban
+module github.com/lukeg32/caddy-fail2ban
 
 go 1.21.0
 
