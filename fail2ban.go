@@ -42,7 +42,7 @@ func (m *Fail2Ban) Provision(ctx caddy.Context) error {
 }
 
 func (m *Fail2Ban) Match(req *http.Request) bool {
-        remote_ip, _, err := net.SplitHostPort(req.RemoteAddr)
+        remoteIP, _, err := net.SplitHostPort(req.RemoteAddr)
         if err != nil {
                 m.logger.Error("Error parsing remote addr into IP & port", zap.String("remote_addr", req.RemoteAddr), zap.Error(err))
                 // Deny by default
@@ -51,34 +51,38 @@ func (m *Fail2Ban) Match(req *http.Request) bool {
 
         const trustedProxy = "10.10.4.99" // the known proxy address
 
-        // will try the header ip's only if we are coming from the trusted proxy
-        var client_ip string
-        if remote_ip == trustedProxy {
+        // will try to extract the client ip from the headers only if we are coming from the trusted proxy
+        var clientIP string
+        if remoteIP == trustedProxy {
                 if xff := req.Header.Get("X-Forwarded-For"); xff != "" {
-                        client_ip = strings.TrimSpace(strings.Split(xff, ",")[0])
+                        clientIP = strings.TrimSpace(strings.Split(xff, ",")[0])
+                	m.logger.Info("Using X-Forwareded-For")
                 } else if xrip := req.Header.Get("X-Real-IP"); xrip != "" {
-                        client_ip = strings.TrimSpace(xrip)
+                        clientIP = strings.TrimSpace(xrip)
+                	m.logger.Info("Using X-Real-IP")
                 } else {
-                        client_ip = remote_ip
+                        clientIP = remoteIP
+                	m.logger.Info("No X-Forwareded-For or X-Real-IP headers, using remote_ip")
                 }
         } else {
-                client_ip = remote_ip
+                clientIP = remoteIP
+                m.logger.Debug("Not Trusted Proxy using remote_ip")
         }
 
 
         // Only ban if header X-Caddy-Ban is sent
         _, ok := req.Header["X-Caddy-Ban"]
         if ok {
-                m.logger.Info("banned IP", zap.String("remote_addr", remote_ip), zap.String("client_ip", client_ip))
+                m.logger.Info("banned IP", zap.String("remote_ip", remoteIP), zap.String("clientIP", client_ip))
                 return true
         }
 
-        if m.banlist.IsBanned(client_ip) == true {
-                m.logger.Info("banned IP", zap.String("remote_addr", client_ip))
+        if m.banlist.IsBanned(clientIP) == true {
+                m.logger.Info("banned IP", zap.String("client_ip", clientIP))
                 return true
         }
 
-        m.logger.Debug("received request", zap.String("remote_addr", remote_ip))
+	m.logger.Debug("received request", zap.String("remote_ip", remoteIP))
         return false
 }
 
