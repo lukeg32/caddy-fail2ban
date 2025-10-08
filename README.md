@@ -10,18 +10,20 @@ when running a double proxy architecture fail2ban would either:
 
 fail2ban is blocking using firewall rules in iptables or nftables  
 
-## Solution: 
-Block connections based off of the X-Real-IP or X-Forwarded-For headers in the http (application) layer, but only when the remote is the trusted proxy.  
+## Solution
+Block connections based off of the X-Real-IP or X-Forwarded-For headers in the http (application) layer, but only when the connecting ip is the trusted proxy.  
+  
 iptables/nftables arnt made to do this sort of behavior, but caddy should
 
 ## Reason for Fork
-The orignal repo was supposed to fix this behavior but when I tried to use it, the client ip would get banned, as the client ip was getting passed back to the server properly (http headers).  
-But when the client goes through the 2nd outer proxy, the original repo would compare the client ip to the proxies ip, thus back to the original problem.
+The original repo was comparing the connection ip(remote_ip) to the banned ip, this connection ip was always the upstream proxy. So I had the same issue as described above, banning a client that wasnt directly connecting to the server
 
-## Changes:
-1. if trusted proxy, grab ip from X-Real-IP or X-Forwarded-For and do the ban compare with that ip
+## Changes
+1. if trusted proxy, grab ip from X-Real-IP or X-Forwarded-For and do the ban compare with that ip  
 
-Not a huge change, but now it works (also until I can figure out how to grab trusted proxy from caddy config, its just hard coded)
+Not a huge change, but now it works (also until I can figure out how to grab trusted proxy from caddy config, its just hard coded)  
+  
+This also means a malicious user cant run their own proxy set fake headers and avoid bans
 
 ## Getting Started
 
