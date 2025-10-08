@@ -16,7 +16,9 @@ Block connections based off of the X-Real-IP or X-Forwarded-For headers in the h
 iptables/nftables arnt made to do this sort of behavior, but caddy should
 
 ## Reason for Fork
-The original repo was comparing the connection ip(remote_ip) to the banned ip, this connection ip was always the upstream proxy. So I had the same issue as described above, banning a client that wasnt directly connecting to the server
+The original repo was comparing the connection ip(remote_ip) to the banned ip, this connection ip is the ip directly connecting to the server, rather than the client connecting through a chain of proxies.  
+  
+So I had the same issue as described above, banning a client that wasnt directly connecting to the server, so banning nothing.
 
 ## Changes
 1. if trusted proxy, grab ip from X-Real-IP or X-Forwarded-For and do the ban compare with that ip  
